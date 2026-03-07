@@ -100,6 +100,7 @@
   transition: border-color 0.15s;
   outline: none;
   min-height: 140px;
+  box-sizing: border-box;
 }
 
 .textarea:focus {
@@ -327,26 +328,45 @@
   flex-shrink: 0;
 }
 
+/* ─── Category groups ────────────────────────────────────────────────────────── */
+.category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.category-header {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: #9ca3af;
+  padding: 6px 4px 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
 /* ─── Checklist ──────────────────────────────────────────────────────────────── */
 .checklist {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .checklist-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 8px 10px;
   border-radius: 8px;
-  cursor: pointer;
   transition: background 0.12s;
   user-select: none;
 }
 
 .checklist-item:hover { background: #f3f4f6; }
+
+.checklist-item:hover .btn-delete { opacity: 1; }
 
 .checklist-item.checked .task-text {
   text-decoration: line-through;
@@ -363,6 +383,7 @@
   border: 1.8px solid #d1d5db;
   background: white;
   flex-shrink: 0;
+  cursor: pointer;
   transition: background 0.12s, border-color 0.12s;
 }
 
@@ -372,11 +393,114 @@
 }
 
 .task-text {
+  flex: 1;
   font-size: 14px;
   line-height: 1.5;
   color: var(--text);
   transition: color 0.12s;
+  cursor: pointer;
 }
+
+/* ─── Priority badge ─────────────────────────────────────────────────────────── */
+.priority-badge {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: 0.2px;
+}
+
+.priority-badge:hover { opacity: 0.8; transform: scale(1.05); }
+
+.priority-high   { background: #fee2e2; color: #b91c1c; }
+.priority-medium { background: #fef3c7; color: #92400e; }
+.priority-low    { background: #d1fae5; color: #065f46; }
+
+/* ─── Delete button ──────────────────────────────────────────────────────────── */
+.btn-delete {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: #d1d5db;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.btn-delete:hover { color: #ef4444; background: #fee2e2; }
+
+/* ─── Add task row ───────────────────────────────────────────────────────────── */
+.add-task-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.add-task-input {
+  flex: 1;
+  min-width: 140px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.add-task-input:focus { border-color: var(--accent); background: white; }
+.add-task-input::placeholder { color: #adb5bd; }
+
+.add-task-select {
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: white;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.add-task-select:focus { border-color: var(--accent); }
+
+.btn-add-task {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-add-task:hover { background: var(--accent-hover); }
 
 /* ─── Footer ─────────────────────────────────────────────────────────────────── */
 .footer {
@@ -393,4 +517,6 @@
   .result-actions { align-self: flex-start; }
   .button-row { flex-direction: column; }
   .btn-primary, .btn-secondary, .btn-ghost { width: 100%; justify-content: center; }
+  .add-task-row { flex-direction: column; align-items: stretch; }
+  .add-task-select, .btn-add-task { width: 100%; }
 }

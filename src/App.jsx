@@ -5,22 +5,34 @@ import './App.css'
 // ─── Sample prompt for the demo ──────────────────────────────────────────────
 const SAMPLE_PROMPT = `Write a 4 to 5 page comparative analysis essay on two texts from the course reading list. Your essay should focus on a single theme, such as morality, gender, race, or personal identity. Include at least two direct quotations from each text and proper MLA citations. Submit a PDF on Canvas by Friday at 11:59 PM. You will also give a 3 minute class presentation next week.`
 
-// ─── Icons (inline SVG, no library needed) ───────────────────────────────────
+const PRIORITY_CYCLE = ['high', 'medium', 'low']
+const PRIORITY_LABELS = { high: 'High', medium: 'Med', low: 'Low' }
+const CATEGORY_ORDER = ['Research', 'Writing', 'Formatting', 'Review', 'Presentation', 'Submission', 'Other']
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
 const CopyIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
   </svg>
 )
-
 const DownloadIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
   </svg>
 )
-
 const CalendarIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+)
+const TrashIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+  </svg>
+)
+const PlusIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
   </svg>
 )
 
@@ -36,10 +48,44 @@ function Spinner() {
 
 // ─── Result Card ─────────────────────────────────────────────────────────────
 function ResultCard({ result }) {
-  const [checked, setChecked] = useState({})
+  const [tasks, setTasks] = useState(() => result.checklist)
   const [copied, setCopied] = useState(false)
+  const [newTask, setNewTask] = useState('')
+  const [newCategory, setNewCategory] = useState('Other')
+  const [newPriority, setNewPriority] = useState('medium')
 
-  const toggleCheck = (i) => setChecked(prev => ({ ...prev, [i]: !prev[i] }))
+  const toggleCheck = (id) =>
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, checked: !t.checked } : t))
+
+  const cyclePriority = (id) =>
+    setTasks(prev => prev.map(t => {
+      if (t.id !== id) return t
+      const next = PRIORITY_CYCLE[(PRIORITY_CYCLE.indexOf(t.priority) + 1) % 3]
+      return { ...t, priority: next }
+    }))
+
+  const removeTask = (id) =>
+    setTasks(prev => prev.filter(t => t.id !== id))
+
+  const addTask = () => {
+    const text = newTask.trim()
+    if (!text) return
+    setTasks(prev => [...prev, {
+      id: `custom_${Date.now()}`,
+      text,
+      category: newCategory,
+      priority: newPriority,
+      checked: false,
+    }])
+    setNewTask('')
+  }
+
+  // Group tasks by category, preserving defined order
+  const grouped = CATEGORY_ORDER
+    .map(cat => ({ cat, items: tasks.filter(t => t.category === cat) }))
+    .filter(g => g.items.length > 0)
+
+  const doneCount = tasks.filter(t => t.checked).length
 
   // Build plain-text export
   const exportText = () => {
@@ -55,8 +101,11 @@ function ResultCard({ result }) {
       result.deliverables.forEach(d => lines.push(`  • ${d}`))
       lines.push('')
     }
-    lines.push('Checklist:')
-    result.checklist.forEach(t => lines.push(`  [ ] ${t}`))
+    grouped.forEach(({ cat, items }) => {
+      lines.push(`${cat}:`)
+      items.forEach(t => lines.push(`  [${t.checked ? 'x' : ' '}] [${t.priority.toUpperCase()}] ${t.text}`))
+      lines.push('')
+    })
     return lines.filter(l => l !== undefined).join('\n')
   }
 
@@ -117,32 +166,83 @@ function ResultCard({ result }) {
         </section>
       )}
 
-      {/* Checklist */}
+      {/* Task list grouped by category */}
       <section className="result-section">
         <h3 className="section-label">
-          Checklist
-          <span className="progress-badge">
-            {Object.values(checked).filter(Boolean).length}/{result.checklist.length}
-          </span>
+          Tasks
+          <span className="progress-badge">{doneCount}/{tasks.length}</span>
         </h3>
-        <ul className="checklist">
-          {result.checklist.map((task, i) => (
-            <li
-              key={i}
-              className={`checklist-item ${checked[i] ? 'checked' : ''}`}
-              onClick={() => toggleCheck(i)}
-            >
-              <span className="checkbox" aria-checked={!!checked[i]} role="checkbox">
-                {checked[i] && (
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                    <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </span>
-              <span className="task-text">{task}</span>
-            </li>
-          ))}
-        </ul>
+
+        {grouped.map(({ cat, items }) => (
+          <div key={cat} className="category-group">
+            <div className="category-header">{cat}</div>
+            <ul className="checklist">
+              {items.map(task => (
+                <li key={task.id} className={`checklist-item ${task.checked ? 'checked' : ''}`}>
+                  <span
+                    className="checkbox"
+                    aria-checked={!!task.checked}
+                    role="checkbox"
+                    onClick={() => toggleCheck(task.id)}
+                  >
+                    {task.checked && (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </span>
+                  <span className="task-text" onClick={() => toggleCheck(task.id)}>
+                    {task.text}
+                  </span>
+                  <button
+                    className={`priority-badge priority-${task.priority}`}
+                    onClick={() => cyclePriority(task.id)}
+                    title="Click to change priority"
+                  >
+                    {PRIORITY_LABELS[task.priority]}
+                  </button>
+                  <button
+                    className="btn-delete"
+                    onClick={() => removeTask(task.id)}
+                    title="Remove task"
+                  >
+                    <TrashIcon />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        {/* Add custom task */}
+        <div className="add-task-row">
+          <input
+            className="add-task-input"
+            placeholder="Add a task..."
+            value={newTask}
+            onChange={e => setNewTask(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addTask()}
+          />
+          <select
+            className="add-task-select"
+            value={newCategory}
+            onChange={e => setNewCategory(e.target.value)}
+          >
+            {CATEGORY_ORDER.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select
+            className="add-task-select"
+            value={newPriority}
+            onChange={e => setNewPriority(e.target.value)}
+          >
+            <option value="high">High</option>
+            <option value="medium">Med</option>
+            <option value="low">Low</option>
+          </select>
+          <button className="btn-add-task" onClick={addTask}>
+            <PlusIcon /> Add
+          </button>
+        </div>
       </section>
     </div>
   )
@@ -164,7 +264,6 @@ export default function App() {
     setLoading(true)
     setResult(null)
 
-    // Simulate a brief "thinking" delay for realism
     setTimeout(() => {
       const parsed = parseAssignmentPrompt(input)
       if (!parsed || parsed.checklist.length === 0) {
@@ -191,7 +290,6 @@ export default function App() {
 
   return (
     <div className="page">
-      {/* ── Header ── */}
       <header className="header">
         <div className="logo">
           <span className="logo-mark">T</span>
@@ -201,7 +299,6 @@ export default function App() {
       </header>
 
       <main className="main">
-        {/* ── Input card ── */}
         <div className="input-card">
           <label className="input-label" htmlFor="prompt">
             Paste assignment prompt
@@ -217,11 +314,7 @@ export default function App() {
           {error && <p className="error-msg">{error}</p>}
 
           <div className="button-row">
-            <button
-              className="btn-primary"
-              onClick={handleGenerate}
-              disabled={loading}
-            >
+            <button className="btn-primary" onClick={handleGenerate} disabled={loading}>
               {loading ? 'Generating...' : 'Generate Checklist'}
             </button>
             <button className="btn-secondary" onClick={handleTryExample}>
@@ -233,11 +326,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── Loading state ── */}
         {loading && <Spinner />}
-
-        {/* ── Results ── */}
-        {result && !loading && <ResultCard result={result} />}
+        {result && !loading && (
+          <ResultCard key={result.title + result.summary} result={result} />
+        )}
       </main>
 
       <footer className="footer">
