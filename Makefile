@@ -5,16 +5,20 @@ HEADERS := $(wildcard include/*.hpp)
 LIB_SRC := src/prices.cpp src/risk.cpp src/backtest.cpp
 LIB_OBJ := $(LIB_SRC:src/%.cpp=build/%.o)
 
-PORTFOLIO := VOO:0.4 QQQ:0.3 BND:0.3
+PORTFOLIO     := VOO:0.4 QQQ:0.3 BND:0.3
+BENCH_TICKERS := VOO QQQ BND VTI VXUS VWO AGG TLT IEF GLD VNQ XLK XLF XLE XLV
 
-.PHONY: all test run fetch clean
+.PHONY: all test run bench fetch clean
 
-all: build/risk build/tests
+all: build/risk build/bench build/tests
 
 build/%.o: src/%.cpp $(HEADERS) | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 build/risk: src/main.cpp $(LIB_OBJ) $(HEADERS) | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(filter-out %.hpp,$^) -o $@
+
+build/bench: src/bench.cpp $(LIB_OBJ) $(HEADERS) | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(filter-out %.hpp,$^) -o $@
 
 build/tests: tests/test_main.cpp $(LIB_OBJ) $(HEADERS) | build
@@ -24,13 +28,16 @@ build:
 	mkdir -p build
 
 fetch:
-	python3 scripts/fetch_prices.py VOO QQQ BND
+	python3 scripts/fetch_prices.py $(BENCH_TICKERS)
 
 test: build/tests
 	./build/tests
 
 run: build/risk
 	./build/risk $(PORTFOLIO)
+
+bench: build/bench
+	./build/bench $(BENCH_TICKERS)
 
 clean:
 	rm -rf build
