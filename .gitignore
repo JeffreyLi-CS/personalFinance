@@ -1,0 +1,9 @@
+build/
+__pycache__/
+.DS_Store
+
+# Real bank and brokerage exports never get committed.
+data/private/
+
+# Downloaded with scripts/fetch_prices.py; not redistributed.
+data/prices/
